@@ -11,16 +11,14 @@ class Layout {
         this.pannel_cy = cy;
     }
 
-    base(widget, srcType, dstType, fillGrid = false) {
+    base(widget, srcType, dstType, fillGrid = 0) {
         const { id, definition } = widget;
 
         assert.strictEqual(definition.type, srcType);
         assert.ok(dstType);
 
-        const is_row = (dstType == 'row');
-
         const cx = fillGrid ? grid_max : this.pannel_cx;
-        const cy = is_row ? 1 : this.pannel_cy;
+        const cy = fillGrid ? fillGrid : this.pannel_cy;
         if (grid_max < this.pannel_x + cx) {
             this.pannel_x = 0;
             this.pannel_y += cy;
@@ -29,7 +27,7 @@ class Layout {
         const pannel = {
             id,
             type: dstType,
-            title: definition.title || 'no title',
+            title: definition.title,
             gridPos: {
                 x: this.pannel_x,
                 y: this.pannel_y,
@@ -44,7 +42,7 @@ class Layout {
             this.pannel_y += cy;
         }
 
-        if (!is_row)
+        if (dstType != 'row')
             Object.assign(pannel, { datasource });
 
         return { definition, pannel }

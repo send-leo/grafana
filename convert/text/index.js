@@ -1,11 +1,12 @@
 const { pluginVersion } = require('../constant');
 
 function convert_text(layout, widget) {
-    const { definition, pannel } = layout.base(widget, 'note', 'text', true);
+    const { definition, pannel } = layout.base(widget, 'note', 'text', 2);
+
     return Object.assign(pannel, {
         "options": {
-            "content": "# Title\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)",
-            "mode": "markdown"
+            content: `# ${definition.content}`,
+            mode: 'markdown',
         },
         pluginVersion,
     });
