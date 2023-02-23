@@ -66,7 +66,7 @@ function convert_timeseries(layout, widget) {
                     uid: '_Du_XZKVk'
                 },
                 exemplar: true,
-                expr: "max by (sbregion) (100 - irate(node_cpu_seconds_total{app='api', mode=\'idle\'}[5m]) * 100)",
+                expr: "max by (sbregion) (100 - irate(node_cpu_seconds_total{sbregion=~'$sbregion',mode='idle',app='api'}[5m]) * 100)",
                 interval: '',
                 legendFormat: '{{sbregion}}',
                 refId: 'A'
@@ -110,13 +110,19 @@ function convert_yaxis(widget, pannel) {
     if (src_yaxis) {
         const dst_defaults = pannel.fieldConfig.defaults;
 
-        if (src_yaxis.min)
-            dst_defaults.min = parseInt(src_yaxis.min);
+        if (src_yaxis.min) {
+            const n = parseInt(src_yaxis.min);
+            if (!isNaN(n))
+                dst_defaults.min = n;
+        }
 
         if (src_yaxis.max) {
-            dst_defaults.max = parseInt(src_yaxis.max);
-            if (dst_defaults.max == 100)
-                dst_defaults.unit = 'percent';
+            const n = parseInt(src_yaxis.max);
+            if (!isNaN(n)) {
+                dst_defaults.max = n;
+                if (n == 100)
+                    dst_defaults.unit = 'percent';
+            }
         }
     }
 }
@@ -141,14 +147,14 @@ function convert_legend(widget, pannel) {
 function get_threshold_value(marker_value) {
     const values = marker_value.split(/[ ,]+/);
     // marker_value: 10 < y < 20
-    try {
-        return parseInt(values[0]);
-    } catch { }
+    let threshold = parseInt(values[0]);
+    if (!isNaN(threshold))
+        return threshold;
 
     // marker_value: y = 10
-    try {
-        return parseInt(values.at(-1));
-    } catch { }
+    threshold = parseInt(values.at(-1));
+    if (!isNaN(threshold))
+        return threshold;
 
     console.error(`invalid marker_value(${marker_value})`);
     return null;
