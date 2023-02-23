@@ -13,7 +13,7 @@ function convert_unknown(layout, widget) {
         '```',
     ].join('\n');
 
-    const { pannel } = layout.base(widget, type, 'text');
+    const pannel = layout.base(widget, type, 'text');
     return Object.assign(pannel, {
         options: {
             content,

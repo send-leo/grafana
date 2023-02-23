@@ -20,14 +20,14 @@ function make_panels(source) {
     const panels = [];
 
     for (const group of source.widgets) {
-        const row = convert_row(layout, group)
         console.log();
-        console.log(`[${row.title}]`);
+        console.log(`[${group.definition.title}]`);
+        const row = convert_row(layout, group)
         panels.push(row);
 
         for (const widget of group.definition.widgets) {
+            console.log('-', widget.definition.title || '(no name)');
             const panel = convert_panel(layout, widget);
-            console.log(panel.title);
             panels.push(panel);
         }
     }

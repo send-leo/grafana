@@ -45,7 +45,7 @@ class Layout {
         if (dstType != 'row')
             Object.assign(pannel, { datasource });
 
-        return { definition, pannel }
+        return pannel;
     }
 
 }

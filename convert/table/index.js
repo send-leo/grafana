@@ -1,7 +1,7 @@
 const { pluginVersion } = require('../constant');
 
 function convert_table(layout, widget) {
-    const { definition, pannel } = layout.base(widget, 'query_table', 'table');
+    const pannel = layout.base(widget, 'query_table', 'table');
     return Object.assign(pannel, {
         "fieldConfig": {
             "defaults": {
