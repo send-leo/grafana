@@ -1,0 +1,85 @@
+{
+    "id": 8543235098664642,
+    "definition": {
+        "title": "ASG - API Max CPU Utilization",
+        "show_legend": false,
+        "legend_size": "0",
+        "type": "timeseries",
+        "requests": [
+            {
+                "formulas": [
+                    {
+                        "formula": "default_zero(query1) + default_zero(query2) + default_zero(query3) + default_zero(query4) + default_zero(query5)"
+                    }
+                ],
+                "response_format": "timeseries",
+                "queries": [
+                    {
+                        "query": "max:system.cpu.user{app:api,product:mesg,$Region} by {aws_autoscaling_groupname}",
+                        "data_source": "metrics",
+                        "name": "query1"
+                    },
+                    {
+                        "query": "max:system.cpu.guest{app:api,product:mesg,$Region} by {aws_autoscaling_groupname}",
+                        "data_source": "metrics",
+                        "name": "query2"
+                    },
+                    {
+                        "query": "max:system.cpu.iowait{app:api,product:mesg,$Region} by {aws_autoscaling_groupname}",
+                        "data_source": "metrics",
+                        "name": "query3"
+                    },
+                    {
+                        "query": "max:system.cpu.stolen{app:api,product:mesg,$Region} by {aws_autoscaling_groupname}",
+                        "data_source": "metrics",
+                        "name": "query4"
+                    },
+                    {
+                        "query": "max:system.cpu.system{app:api,product:mesg,$Region} by {aws_autoscaling_groupname}",
+                        "data_source": "metrics",
+                        "name": "query5"
+                    }
+                ],
+                "style": {
+                    "palette": "dog_classic",
+                    "line_type": "solid",
+                    "line_width": "normal"
+                },
+                "display_type": "line"
+            }
+        ],
+        "yaxis": {
+            "include_zero": false,
+            "min": "0",
+            "max": "100"
+        },
+        "markers": [
+            {
+                "label": " OK ",
+                "value": "40 < y < 60",
+                "display_type": "ok dashed"
+            },
+            {
+                "label": " High ",
+                "value": "60 < y < 80",
+                "display_type": "warning dashed"
+            },
+            {
+                "label": " Critical ",
+                "value": "80 < y < 100",
+                "display_type": "error dashed"
+            },
+            {
+                "label": " Low ",
+                "value": "0 < y < 40",
+                "display_type": "info dashed"
+            }
+        ]
+    },
+    "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 4,
+        "height": 2
+    }
+}

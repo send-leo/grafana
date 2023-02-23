@@ -1,0 +1,16 @@
+{
+    "id": 14,
+    "type": "text",
+    "title": "Panel Title2",
+    "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+    },
+    "options": {
+        "content": "# Title\n\nFor markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)",
+        "mode": "markdown"
+    },
+    "pluginVersion": "8.4.7",
+}

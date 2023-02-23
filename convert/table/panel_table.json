@@ -1,0 +1,66 @@
+{
+  "id": 12,
+  "type": "table",
+  "title": "Panel Title",
+  "gridPos": {
+    "h": 8,
+    "w": 12,
+    "x": 0,
+    "y": 0
+  },
+  "datasource": {
+    "type": "prometheus",
+    "uid": "_Du_XZKVk"
+  },
+  "fieldConfig": {
+    "defaults": {
+      "color": {
+        "mode": "thresholds"
+      },
+      "custom": {
+        "align": "auto",
+        "displayMode": "auto"
+      },
+      "mappings": [],
+      "thresholds": {
+        "mode": "absolute",
+        "steps": [
+          {
+            "color": "green",
+            "value": null
+          },
+          {
+            "color": "red",
+            "value": 80
+          }
+        ]
+      }
+    },
+    "overrides": []
+  },
+  "options": {
+    "footer": {
+      "fields": "",
+      "reducer": [
+        "sum"
+      ],
+      "show": false
+    },
+    "showHeader": true
+  },
+  "pluginVersion": "8.4.7",
+  "targets": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "_Du_XZKVk"
+      },
+      "exemplar": true,
+      "expr": "access_api_duration{}",
+      "format": "table",
+      "interval": "",
+      "legendFormat": "",
+      "refId": "A"
+    }
+  ],
+}

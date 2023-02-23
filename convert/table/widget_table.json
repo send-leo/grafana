@@ -1,0 +1,36 @@
+{
+    "id": 4253167433126926,
+    "definition": {
+        "title": "# of instances by instance type / app",
+        "type": "query_table",
+        "requests": [
+            {
+                "formulas": [
+                    {
+                        "formula": "query1",
+                        "limit": {
+                            "count": 50,
+                            "order": "desc"
+                        },
+                        "alias": "# of instances"
+                    }
+                ],
+                "response_format": "scalar",
+                "queries": [
+                    {
+                        "query": "sum:aws.ec2.host_ok{product:mesg,$Region} by {app,instance-type}",
+                        "data_source": "metrics",
+                        "name": "query1",
+                        "aggregator": "last"
+                    }
+                ]
+            }
+        ]
+    },
+    "layout": {
+        "x": 8,
+        "y": 8,
+        "width": 4,
+        "height": 2
+    }
+}
