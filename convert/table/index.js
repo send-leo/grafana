@@ -54,28 +54,33 @@ function convert_table(layout, widget) {
 }
 
 function convert_targets(widget, pannel) {
-    const src_queries = widget.definition.requests[0].queries;
     const dst_targets = pannel.targets;
     const refIdSet = new Set();
 
-    src_queries.forEach(query => {
-        const datasource = get_target_datasource(query.data_source);
-        const expr = get_target_expr(query.query);
-        const refId = get_target_refId(query.name);
+    for (request of widget.definition.requests) {
+        // queries
+        const src_queries = request.queries;
+        src_queries.forEach(q => {
+            const datasource = get_target_datasource(q.data_source);
+            const expr = get_target_expr(q.query);
+            const refId = get_target_refId(q.name);
 
-        if (datasource && expr && refId) {
-            refIdSet.add(refId);
-            dst_targets.push({
-                datasource,
-                exemplar: true,
-                expr,
-                format: 'table',
-                interval: '',
-                legendFormat: '',
-                refId,
-            });
-        }
-    });
+            if (datasource && expr && refId) {
+                refIdSet.add(refId);
+                dst_targets.push({
+                    datasource,
+                    exemplar: true,
+                    expr,
+                    format: 'table',
+                    interval: '',
+                    legendFormat: '',
+                    refId,
+                });
+            }
+        });
+
+        break;
+    }
 
     check_target_names(dst_targets, refIdSet);
 }

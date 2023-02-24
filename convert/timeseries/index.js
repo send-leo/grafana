@@ -190,27 +190,58 @@ function convert_thresholds(widget, pannel) {
 }
 
 function convert_targets(widget, pannel) {
-    const src_queries = widget.definition.requests[0].queries;
     const dst_targets = pannel.targets;
     const refIdSet = new Set();
+    let formula_id = 0;
 
-    src_queries.forEach(query => {
-        const datasource = get_target_datasource(query.data_source);
-        const expr = get_target_expr(query.query);
-        const refId = get_target_refId(query.name);
+    for (request of widget.definition.requests) {
+        const nameMap = {}
 
-        if (datasource && expr && refId) {
-            refIdSet.add(refId);
-            dst_targets.push({
-                datasource,
-                exemplar: true,
-                expr,
-                interval: '',
-                legendFormat: '',
-                refId,
+        // queries
+        const src_queries = request.queries;
+        src_queries.forEach(q => {
+            const datasource = get_target_datasource(q.data_source);
+            const expr = get_target_expr(q.query);
+            const refId = get_target_refId(q.name);
+
+            if (datasource && expr && refId) {
+                nameMap[q.name] = refId;
+                refIdSet.add(refId);
+                dst_targets.push({
+                    datasource,
+                    exemplar: true,
+                    expr,
+                    interval: '',
+                    legendFormat: '',
+                    refId,
+                });
+            }
+        });
+
+        // formulas
+        const src_formulas = request.formulas;
+        if (src_formulas) {
+            src_formulas.forEach(f => {
+                let expression = get_target_expr(f.formula);
+                for ([name, refId] of Object.entries(nameMap))
+                    expression = expression.replace(name, `$${refId}`);
+
+                if (expression) {
+                    const refId = `formula_${formula_id++}`;
+                    refIdSet.add(refId);
+                    dst_targets.push({
+                        datasource: { type: '__expr__', uid: '__expr__' },
+                        expression,
+                        hide: false,
+                        refId,
+                        type: 'math'
+                    });
+                }
             });
         }
-    });
+
+        break;
+    }
 
     check_target_names(dst_targets, refIdSet);
 }
