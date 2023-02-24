@@ -1,60 +1,47 @@
-const fs = require('fs').promises;
-const Layout = require('./layout');
-const convert_row = require('./row');
-const convert_timeseries = require('./timeseries');
-const convert_table = require('./table');
-const convert_text = require('./text');
-const convert_unknown = require('./text/unknown');
+const constant = require('./constant');
 
-function convert_panel(layout, widget) {
-    switch (widget.definition.type) {
-        case 'timeseries': return convert_timeseries(layout, widget);
-        case 'query_table': return convert_table(layout, widget);
-        case 'note': return convert_text(layout, widget);
-    }
-    return convert_unknown(layout, widget);
+function parseIntStrict(str) {
+    const n = Number(str)
+    return Number.isInteger(n) ? n : NaN;
 }
 
-function make_panels(source) {
-    const layout = new Layout();
-    const panels = [];
+function get_target_datasource(data_source) {
+    if (data_source == 'metrics')
+        return constant.datasource;
 
-    for (const group of source.widgets) {
-        console.log();
-        console.log(`[${group.definition.title}]`);
-        const row = convert_row(layout, group)
-        panels.push(row);
-
-        for (const widget of group.definition.widgets) {
-            console.log('-', widget.definition.title || '(no name)');
-            const panel = convert_panel(layout, widget);
-            panels.push(panel);
-        }
-    }
-
-    return panels;
+    console.error(`invalid: data_source(${data_source})`);
+    return null;
 }
 
-async function datadog_to_grafana(datadog_path, output_path) {
-    const [source, output] = (await Promise.all([
-        await fs.readFile(datadog_path),
-        await fs.readFile(output_path),
-    ])).map(JSON.parse);
+function get_target_expr(query) {
+    if (query)
+        return query.replace('$Region', "sbregion=~'$sbregion'");
 
-    output.panels = make_panels(source);
+    console.error(`invalid: query(${query})`);
+    return null;
+}
 
-    await fs.rename(output_path, `${output_path}.bak`);
-    await fs.writeFile(output_path, JSON.stringify(output, null, 4));
+function get_target_refId(name) {
+    if (name.startsWith('query')) {
+        const n = parseIntStrict(name.substring(5));
+        if (1 <= n && n <= 26)
+            return String.fromCharCode(64 + n);
+    }
+    return name;
+}
 
-    const group_cnt = source.widgets.length;
-    const panel_cnt = output.panels.length - group_cnt;
-
-    console.log();
-    console.log('groups:', group_cnt);
-    console.log('panels:', panel_cnt);
-    console.log('output:', output_path);
+function check_target_names(targets, refIdSet) {
+    if (targets.length != refIdSet.size) {
+        const names = src_queries.map(q => q.name);
+        const ids = Array.from(refIdSet);
+        throw Error(`invalid: duplicated names(${names}), ids(${ids})`);
+    }
 }
 
 module.exports = {
-    datadog_to_grafana,
+    parseIntStrict,
+    get_target_datasource,
+    get_target_expr,
+    get_target_refId,
+    check_target_names,
 };

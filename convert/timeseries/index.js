@@ -1,3 +1,10 @@
+const {
+    parseIntStrict,
+    get_target_datasource,
+    get_target_expr,
+    get_target_refId,
+    check_target_names,
+} = require('../util');
 
 function convert_timeseries(layout, widget) {
     const pannel = layout.base(widget, 'timeseries', 'timeseries');
@@ -59,32 +66,21 @@ function convert_timeseries(layout, widget) {
                 sort: 'none'
             }
         },
-        targets: [
-            {
-                datasource: {
-                    type: 'prometheus',
-                    uid: '_Du_XZKVk'
-                },
-                exemplar: true,
-                expr: "max by (sbregion) (100 - irate(node_cpu_seconds_total{sbregion=~'$sbregion',mode='idle',app='api'}[5m]) * 100)",
-                interval: '',
-                legendFormat: '{{sbregion}}',
-                refId: 'A'
-            }
-        ]
+        targets: []
     });
 
     convert_style(widget, pannel);
     convert_yaxis(widget, pannel);
     convert_legend(widget, pannel);
     convert_thresholds(widget, pannel);
+    convert_targets(widget, pannel);
     return pannel;
 }
 
 function convert_style(widget, pannel) {
     const src_requests = widget.definition.requests;
     if (src_requests.length != 1)
-        console.error(`invalid requests.length(${src_requests.length})`);
+        console.error(`invalid: requests.length(${src_requests.length})`);
 
     const src_display_type = src_requests[0].display_type;
     const dst_custom = pannel.fieldConfig.defaults.custom;
@@ -102,7 +98,7 @@ function convert_style(widget, pannel) {
             dst_custom.stacking.mode = 'normal';
             return;
     }
-    console.error(`invalid src_display_type(${src_display_type})`);
+    console.error(`invalid: src_display_type(${src_display_type})`);
 }
 
 function convert_yaxis(widget, pannel) {
@@ -111,13 +107,13 @@ function convert_yaxis(widget, pannel) {
         const dst_defaults = pannel.fieldConfig.defaults;
 
         if (src_yaxis.min) {
-            const n = parseInt(src_yaxis.min);
+            const n = parseIntStrict(src_yaxis.min);
             if (!isNaN(n))
                 dst_defaults.min = n;
         }
 
         if (src_yaxis.max) {
-            const n = parseInt(src_yaxis.max);
+            const n = parseIntStrict(src_yaxis.max);
             if (!isNaN(n)) {
                 dst_defaults.max = n;
                 if (n == 100)
@@ -139,7 +135,7 @@ function convert_legend(widget, pannel) {
             else if (col == 'avg')
                 dst_legend.calcs.push('mean');
             else
-                console.error(`invalid legend col(${col})`);
+                console.error(`invalid: legend col(${col})`);
         });
     }
 }
@@ -147,16 +143,16 @@ function convert_legend(widget, pannel) {
 function get_threshold_value(marker_value) {
     const values = marker_value.split(/[ ,]+/);
     // marker_value: 10 < y < 20
-    let threshold = parseInt(values[0]);
+    let threshold = parseIntStrict(values[0]);
     if (!isNaN(threshold))
         return threshold;
 
     // marker_value: y = 10
-    threshold = parseInt(values.at(-1));
+    threshold = parseIntStrict(values.at(-1));
     if (!isNaN(threshold))
         return threshold;
 
-    console.error(`invalid marker_value(${marker_value})`);
+    console.error(`invalid: marker_value(${marker_value})`);
     return null;
 }
 
@@ -171,7 +167,7 @@ function get_threshold_color(marker_type) {
         case 'error': return 'red';
     }
 
-    console.error(`invalid marker_type(${marker_type})`);
+    console.error(`invalid: marker_type(${marker_type})`);
     return null;
 }
 
@@ -191,6 +187,32 @@ function convert_thresholds(widget, pannel) {
             }
         })
     }
+}
+
+function convert_targets(widget, pannel) {
+    const src_queries = widget.definition.requests[0].queries;
+    const dst_targets = pannel.targets;
+    const refIdSet = new Set();
+
+    src_queries.forEach(query => {
+        const datasource = get_target_datasource(query.data_source);
+        const expr = get_target_expr(query.query);
+        const refId = get_target_refId(query.name);
+
+        if (datasource && expr && refId) {
+            refIdSet.add(refId);
+            dst_targets.push({
+                datasource,
+                exemplar: true,
+                expr,
+                interval: '',
+                legendFormat: '',
+                refId,
+            });
+        }
+    });
+
+    check_target_names(dst_targets, refIdSet);
 }
 
 module.exports = convert_timeseries;

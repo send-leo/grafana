@@ -17,6 +17,9 @@ class Layout {
         assert.strictEqual(definition.type, srcType);
         assert.ok(dstType);
 
+        if (srcType == 'list_stream')
+            fillGrid = 8;
+
         const cx = fillGrid ? grid_max : this.pannel_cx;
         const cy = fillGrid ? fillGrid : this.pannel_cy;
         if (grid_max < this.pannel_x + cx) {

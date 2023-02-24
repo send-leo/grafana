@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { parseIntStrict } = require('./convert/util');
 
 const filtered = {}
 
@@ -14,9 +15,84 @@ function filter_note(res) {
     delete res.type;
 }
 
+function filter_requests(res) {
+    let ir = res.requests.length
+    while (ir--) {
+        const request = res.requests[ir];
+
+        // display_type
+        if (['area', 'bars', 'line', 'solid'].includes(request.display_type))
+            delete request.display_type;
+
+        // formulas
+        if (request.formulas) {
+            let i = request.formulas.length
+            while (i--) {
+                const f = request.formulas[i];
+                if (f.alias == '')
+                    delete f.alias;
+                if (f.formula.startsWith('query')) {
+                    const n = parseIntStrict(f.formula.substring(5));
+                    if (1 <= n && n <= 26)
+                        delete f.formula;
+                }
+                if (Object.keys(f).length == 0)
+                    request.formulas.splice(i, 1);
+            }
+            if (!request.formulas.length)
+                delete request.formulas;
+        }
+
+        // queries
+        i = request.queries.length
+        while (i--) {
+            const q = request.queries[i];
+            delete q.name;
+            delete q.query;
+            if (q.data_source == 'metrics')
+                delete q.data_source;
+            if (Object.keys(q).length == 0)
+                request.queries.splice(i, 1);
+        }
+        if (!request.queries.length)
+            delete request.queries;
+
+        // style
+        const style = request.style
+        if (style) {
+            if (style.palette == 'dog_classic')
+                delete style.palette;
+            if (style.line_type == 'solid')
+                delete style.line_type;
+            if (style.line_type == 'solid')
+                delete style.line_type;
+            if (style.line_width == 'normal')
+                delete style.line_width;
+            if (Object.keys(style).length == 0)
+                delete request.style;
+        }
+
+        // response_format
+        if (request.response_format == 'timeseries')
+            delete request.response_format;
+
+        // response_format
+        if (request.on_right_yaxis === false)
+            delete request.on_right_yaxis;
+
+        if (Object.keys(request).length == 0)
+            res.requests.splice(i, 1);
+    }
+
+    if (!res.requests.length)
+        delete res.requests;
+}
+
 function filter_table(res) {
     delete res.content;
     delete res.type;
+
+    filter_requests(res);
 }
 
 function filter_timeseries(res) {
@@ -26,6 +102,8 @@ function filter_timeseries(res) {
     delete res.markers;
     delete res.show_legend;
     delete res.type;
+
+    filter_requests(res);
 
     const yaxis = res.yaxis;
     if (yaxis) {
@@ -61,24 +139,37 @@ function filter_widget(res) {
         filter_timeseries(res);
 }
 
+function clone_widget(widget) {
+    const res = JSON.parse(JSON.stringify(widget.definition));
+    delete res.title_align;
+    delete res.title_size;
+    return res;
+}
+
+
 function filter_datadog(datadog_path, output_dir) {
     const source = JSON.parse(fs.readFileSync(datadog_path));
 
     for (const group of source.widgets) {
         console.log();
         console.log(`[${group.definition.title}]`);
-        const row = filter_group(JSON.parse(JSON.stringify(group.definition)));
+        filter_group(clone_widget(group));
 
         for (const widget of group.definition.widgets) {
             console.log('-', widget.definition.title || '(no name)');
-            const panel = filter_widget(JSON.parse(JSON.stringify(widget.definition)));
+            filter_widget(clone_widget(widget));
         }
     }
 
-    for (const [key, value] of Object.entries(filtered)) {
+    for (const [key, widgets] of Object.entries(filtered)) {
+        const errors = widgets.filter(widget => {
+            const wkeys = Object.keys(widget);
+            return wkeys.length != 1 || wkeys[0] != 'title'
+        });
+
         fs.writeFileSync(
             `${output_dir}/${key}`,
-            JSON.stringify(value, null, 4)
+            JSON.stringify(errors, null, 4)
         );
     }
 }
